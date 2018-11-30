@@ -13,13 +13,45 @@ import org.apache.camel.ProducerTemplate;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.impl.DefaultCamelContext;
 
+import com.apu.cameltemp.converter.JsonSerializer;
+import com.apu.TcpServerForAccessControlAPI.packet.AccessPacket;
+import com.apu.TcpServerForAccessControlAPI.packet.EventType;
+import java.util.Date;
+
 /**
  *
  * @author apu
  */
 public class Main {
     
-    public static void main(String[] args) throws Exception {        
+    private static final int CONNECTION_PORT = 65530;
+    private static final String CONNECTION_HOST = "127.0.0.1";
+    
+    public static void main(String[] args) throws Exception { 
+        
+        int deviceNumber = 15;
+        int packetNumber = 25;
+        AccessPacket packet = new AccessPacket();
+        packet.setEventId(EventType.ENTER_QUERY.getIndex());
+        packet.setDeviceNumber(deviceNumber); 
+        packet.setCardNumber("11111111");
+        packet.setPacketNumber(packetNumber++);
+        packet.setTime(new Date());
+        
+        JsonSerializer serializer = new JsonSerializer();
+        
+        byte[] packetBytes;
+        byte[] packetBytesForSend; 
+        packetBytes = serializer.serializeBytes(packet);
+        packetBytesForSend = new byte[packetBytes.length + 2];
+        int i = 0;
+        for(i=0; i<packetBytes.length; i++) {
+            packetBytesForSend[i] = packetBytes[i];
+        }
+        packetBytesForSend[i++] = '\r';
+        packetBytesForSend[i++] = '\n';
+        String sendStr = new String(packetBytesForSend);
+        
                 CamelContext context = new DefaultCamelContext();        
                 try {  
                     Processor httpRouteProcessor = new Processor() {
@@ -28,19 +60,14 @@ public class Main {
                           String name = (String)exchange.getIn().getHeader("name");
                           
                           ProducerTemplate template = exchange.getContext().createProducerTemplate();
-
-                          Exchange exchangeInner = template.request("http4://www.google.com/search", new Processor() {
-                              public void process(Exchange exchange2) throws Exception {
-                                  exchange2.getIn().setHeader(Exchange.HTTP_QUERY, ("hl=en&q=activemq"));
-                              }
-                          });
-                          Message out = exchangeInner.getOut();
+                          
+                          Object responce = template.requestBody("netty:tcp://localhost:65530?sync=true&textline=true", sendStr);
                           
                           exchange.getOut().setBody(pktdata + "\r\n" 
                               + name + "\r\n"
-                              + out.getHeader(Exchange.HTTP_RESPONSE_CODE, Integer.class) + "\r\n"
-                              + out.getBody()
+                              + responce
                               );
+                          template.stop();
                         }
                       };
                     
@@ -51,10 +78,8 @@ public class Main {
                             .process(httpRouteProcessor);
 //                            .to("seda:incoming");
                           }
-                      };  
-    
-                      
-                      
+                      }; 
+
 //                    RouteBuilder tcpInputRouteBuilder = new RouteBuilder() {
 //                          public void configure() {
 //                              from("seda:incoming")  
@@ -72,15 +97,10 @@ public class Main {
 //                                .to("seda:outgoing");
 //                              }
 //                          };
-                    
-                    
-//                    context.addComponent("activemq", ActiveMQComponent.activeMQComponent("vm://localhost?broker.persistent=false"));        
-                    context.addRoutes(httpRouteBuilder);        
-//                    ProducerTemplate template = context.createProducerTemplate();        
+       
+                    context.addRoutes(httpRouteBuilder);               
                     context.start();        
-//                    template.sendBody("activemq:test.queue", "Hello World");
-                    while(true) {}
-//                    Thread.sleep(2000);        
+                    while(true) {}       
                 } finally {        
                     context.stop();        
                 }        

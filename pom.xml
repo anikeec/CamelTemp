@@ -10,8 +10,14 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <env.camel.version>2.22.1</env.camel.version>
+        <log4j.version>2.11.1</log4j.version>
     </properties>
     <dependencies>
+        <dependency>
+            <groupId>com.apu</groupId>
+            <artifactId>TcpServerForAccessControlAPI</artifactId>
+            <version>0.0.1</version>
+        </dependency>
         <dependency>
             <groupId>org.apache.camel</groupId>
             <artifactId>camel-core</artifactId>
@@ -33,6 +39,23 @@
 		    <version>${env.camel.version}</version>
 <!-- 		    <scope>test</scope> -->
 		</dependency>
+		
+		<!-- logging -->
+	    <dependency>
+	      <groupId>org.apache.logging.log4j</groupId>
+	      <artifactId>log4j-api</artifactId>
+	      <version>${log4j.version}</version>
+	    </dependency>
+	    <dependency>
+	      <groupId>org.apache.logging.log4j</groupId>
+	      <artifactId>log4j-core</artifactId>
+	      <version>${log4j.version}</version>
+	    </dependency>
+	    <dependency>
+	      <groupId>org.apache.logging.log4j</groupId>
+	      <artifactId>log4j-slf4j-impl</artifactId>
+	      <version>${log4j.version}</version>
+	    </dependency>
 		
 		<dependency>
 		    <groupId>com.typesafe.akka</groupId>
