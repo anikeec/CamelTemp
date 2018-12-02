@@ -73,30 +73,11 @@ public class Main {
                     
                     RouteBuilder httpRouteBuilder = new RouteBuilder() {
                         public void configure() {
-                            from("jetty://http://localhost:8095/add.php")  
+                            from("jetty://http://localhost:8095/add.php") 
                             .log("Received a request")  
                             .process(httpRouteProcessor);
-//                            .to("seda:incoming");
                           }
                       }; 
-
-//                    RouteBuilder tcpInputRouteBuilder = new RouteBuilder() {
-//                          public void configure() {
-//                              from("seda:incoming")  
-//                              .log("Received a request")  
-////                              .process(httpRouteProcessor)
-//                              .to("seda:outgoing");
-//                            }
-//                        };
-//                        
-//                    RouteBuilder tcpOutputRouteBuilder = new RouteBuilder() {
-//                            public void configure() {
-//                                from("seda:outgoing")  
-//                                .log("Received a request")  
-////                                .process(httpRouteProcessor)
-//                                .to("seda:outgoing");
-//                              }
-//                          };
        
                     context.addRoutes(httpRouteBuilder);               
                     context.start();        
