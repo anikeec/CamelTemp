@@ -17,6 +17,7 @@ import com.apu.cameltemp.converter.JsonSerializer;
 import com.apu.TcpServerForAccessControlAPI.packet.AccessPacket;
 import com.apu.TcpServerForAccessControlAPI.packet.EventType;
 import java.util.Date;
+import java.util.concurrent.Future;
 
 /**
  *
@@ -61,11 +62,18 @@ public class Main {
                           
                           ProducerTemplate template = exchange.getContext().createProducerTemplate();
                           
-                          Object responce = template.requestBody("netty:tcp://localhost:65530?sync=true&textline=true", sendStr);
+                          Future<Object> future = template.asyncRequestBody(
+                                  "netty:tcp://localhost:65530?sync=true&textline=true", 
+                                  sendStr);
+                          while(!future.isDone()) {
+                            System.out.println("Doing something else while processing..." + future);
+                            Thread.sleep(5);
+                          }
+                          String response = (String) future.get();
                           
                           exchange.getOut().setBody(pktdata + "\r\n" 
                               + name + "\r\n"
-                              + responce
+                              + response
                               );
                           template.stop();
                         }
@@ -74,6 +82,7 @@ public class Main {
                     RouteBuilder httpRouteBuilder = new RouteBuilder() {
                         public void configure() {
                             from("jetty://http://localhost:8095/add.php") 
+                            .threads()
                             .log("Received a request")  
                             .process(httpRouteProcessor);
                           }
